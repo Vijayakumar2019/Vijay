@@ -1,0 +1,59 @@
+tasks:
+  - name: eda_task
+    description: >
+      Perform detailed exploratory data analysis on the provided coffee vending
+      machine dataset (`{csv_path}`).
+
+      Actions:
+      1. Compute key statistics (mean, std, min, max)
+      2. Identify missing data(more than 50% data points) and outliers
+      3. Analyze correlations
+      4. Detect lab-level inconsistencies or trends
+      5. Analyze whether data agumentaion is needed or not.
+      6. Perform feature engineering and list the important columns
+      7. Identify the hidden patterns in the dataset.
+      8. Write findings in a structured Markdown draft report
+
+      CRITICAL ACTION:
+      Use 'file_write_tool' to save the full markdown report as:
+      **'outputs/EDA_Insights_Report.md'**
+    expected_output: >
+      A markdown file summarizing EDA findings, including numeric summaries
+      and textual insights. Confirmation message:
+      "SUCCESS: Report saved to outputs/EDA_Insights_Report.md"
+    agent: data_analyst
+
+  - name: visualization_task
+    description: >
+      Read the 'outputs/EDA_Insights_Report.md' generated in the previous step.
+      Based on its findings, create and embed a minimum of **5 key charts**, such as:
+      - Distributions
+      - Scatter plot, pie charts, bar plots...ect
+      - Correlation Heatmap
+      - Outlier detection by Lab
+      All the created visuals images should be placed inside the **outputs/** folder.
+ 
+      CRITICAL ACTION:
+      Update the report with image links to generated charts and save the
+      final output as:
+      **'outputs/Key_Insights_Report.md'**
+      Also, make sure that Key_Insights_Report has all the data.
+    expected_output: >
+      "SUCCESS: Report saved to outputs/Key_Insights_Report.md"
+    agent: visualizer
+    
+  - name: decision_support_task
+    description: >
+      Review 'outputs/Key_Insights_Report.md' and generate a final decision-support
+      summary for R&D and QA teams. The summary should include:
+      1. Key actionable insights
+      2. Suggested product/lab improvements
+      3. Recommendations for next experiments
+      4. Potential alerts for data anomalies
+
+      CRITICAL ACTION:
+      Use 'file_write_tool' to save the decision summary as:
+      **'outputs/Decision_Support_Summary.md'**
+    expected_output: >
+      "SUCCESS: Report saved to outputs/Decision_Support_Summary.md"
+    agent: decision_consultant

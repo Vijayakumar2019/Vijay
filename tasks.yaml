@@ -1,0 +1,102 @@
+tasks:
+  - name: eda_task
+    description: >
+      Perform comprehensive exploratory data analysis (EDA) on the provided
+      dataset (`{csv_path}`), regardless of domain.
+
+      INITIAL DATASET FAMILIARIZATION:
+      - Inspect schema, data types, row/column counts
+      - Identify numerical, categorical, datetime, and target-like columns
+      - Infer dataset domain (e.g., insurance, finance, operations, healthcare, retail)
+      - Identify potential analytical objectives (prediction, monitoring, optimization)
+
+      CORE EDA ACTIONS:
+      1. Compute descriptive statistics (mean, median, std, min, max, percentiles)
+      2. Identify missing data patterns (highlight columns with >50% missing)
+      3. Detect outliers using statistical methods (IQR / Z-score where applicable)
+      4. Analyze correlations and feature relationships
+      5. Identify group-level inconsistencies or trends (e.g., by category, region, product, time)
+      6. Assess data quality issues (skewness, leakage, redundancy)
+      7. Evaluate whether data augmentation or resampling techniques may be needed
+      8. Perform feature engineering proposals (derived features, encodings, aggregations)
+      9. List top 5 features
+      10. Identify hidden patterns, anomalies, or unexpected behaviors in the data
+
+      REPORTING:
+      - Summarize findings in a clear, structured Markdown report
+      - Clearly separate observations, insights, and risks
+      - Use domain-neutral language while adapting explanations to inferred dataset context
+
+      CRITICAL ACTION:
+      Use 'file_write_tool' to save the full Markdown report as:
+      **'outputs/EDA_Insights_Report.md'**
+
+    expected_output: >
+      A structured Markdown EDA report containing dataset understanding,
+      statistical summaries, data quality findings, and analytical insights.
+      Confirmation message:
+      "SUCCESS: Report saved to outputs/EDA_Insights_Report.md"
+
+    agent: dataset_eda_lead
+  - name: visualization_task
+    description: >
+      Read the 'outputs/EDA_Insights_Report.md' generated in the previous step.
+      Based on the identified data types, domain, and insights, generate
+      meaningful, context-aware visualizations.
+
+      VISUALIZATION REQUIREMENTS:
+      - Create a minimum of **5 high-value charts**, dynamically selected from:
+        - Feature distributions (histogram / boxplot)
+        - Category-wise comparisons (bar / pie charts)
+        - Scatter plots or pairwise relationships
+        - Time-series trends (if datetime columns exist)
+        - Correlation heatmap
+        - Outlier visualization by key grouping variable (if applicable)
+
+      VISUALIZATION STANDARDS:
+      - Ensure all charts are clearly labeled and interpretable
+      - Use business-friendly titles and axis labels
+      - Save all images inside the **outputs/** directory
+
+      REPORT UPDATE:
+      - Embed image links into the original EDA report
+      - Ensure the report remains complete and self-contained
+      - Save the updated report as:
+        **'outputs/Key_Insights_Report.md'**
+
+      CRITICAL ACTION:
+      Use 'file_write_tool' to save the updated report with embedded visuals.
+
+    expected_output: >
+      "SUCCESS: Report saved to outputs/Key_Insights_Report.md"
+
+    agent: adaptive_visualizer
+  - name: decision_support_task
+    description: >
+      Review 'outputs/Key_Insights_Report.md' and translate analytical findings
+      into actionable, domain-aware business recommendations.
+
+      DECISION SUPPORT OUTPUT SHOULD INCLUDE:
+      1. Key insights with potential business or operational impact
+      2. Data quality risks and mitigation recommendations
+      3. Suggested process, policy, or product improvements
+      4. Indicators or alerts for abnormal behavior or anomalies
+      5. Recommendations for:
+         - Further data collection
+         - Feature refinement
+         - Modeling or advanced analytics
+         - Experiments or A/B testing (if applicable)
+
+      COMMUNICATION STYLE:
+      - Clear, concise, and executive-friendly
+      - Adapt recommendations to inferred dataset domain
+      - Focus on impact, feasibility, and next actions
+
+      CRITICAL ACTION:
+      Use 'file_write_tool' to save the decision summary as:
+      **'outputs/Decision_Support_Summary.md'**
+
+    expected_output: >
+      "SUCCESS: Report saved to outputs/Decision_Support_Summary.md"
+
+    agent: business_decision_consultant
