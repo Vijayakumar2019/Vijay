@@ -1,23 +1,16 @@
 [project]
-name = "agent_eda"
+name = "resume-screener"
 version = "0.1.0"
-description = "Agent_EDA using crewAI"
-authors = [{ name = "Your Name", email = "you@example.com" }]
-requires-python = ">=3.10,<3.14"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.10"
 dependencies = [
-    "crewai[tools]>=0.193.2,<1.0.0"
+    "langchain-core>=1.2.17",
+    "langchain-openai>=1.1.10",
+    "langgraph>=1.0.10",
+    "neo4j>=6.1.0",
+    "python-docx>=1.2.0",
+    "python-dotenv>=1.2.2",
+    "streamlit>=1.55.0",
+    "tiktoken>=0.12.0",
 ]
-
-[project.scripts]
-agent_eda = "agent_eda.main:run"
-run_crew = "agent_eda.main:run"
-train = "agent_eda.main:train"
-replay = "agent_eda.main:replay"
-test = "agent_eda.main:test"
-
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
-
-[tool.crewai]
-type = "crew"

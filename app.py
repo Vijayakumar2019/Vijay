@@ -1,50 +1,107 @@
-# app.py - New entry point for Streamlit UI
+import warnings
+warnings.filterwarnings("ignore", message="Pydantic serializer warnings")
+import sys
+from unittest.mock import MagicMock
+
+# 1. THE "DLL SURGERY": Prevent Torch from loading locally to avoid WinError 1114
+# This must happen before ANY other imports.
+sys.modules["torch"] = MagicMock()
+sys.modules["transformers"] = MagicMock()
+
+
 
 import streamlit as st
+import io
 import os
-import tempfile 
-import shutil
-# ❗ ADJUST IMPORT: Correct path based on your package structure
-# Assuming 'src' is in the root and 'agent_eda' is the package name
-from src.agent_eda.crew import DataAnalysisCrew 
+from docx import Document
+from dotenv import load_dotenv
 
-st.set_page_config(layout="wide", page_title="Agent-Powered EDA Crew")
-st.title("☕ EDA Agent")
+# Load environment variables from .env
+load_dotenv()
 
-uploaded_file = st.file_uploader("Upload your CSV dataset for analysis", type="csv")
+# Import your graph engine (ensure graph_engine.py is in the same folder)
+from graph_engine import app_graph
+
+# --- UI CONFIGURATION ---
+st.set_page_config(page_title="Agentic Resume Skill-Graph", page_icon="🚀", layout="wide")
+
+st.title("🚀 Agentic Resume Skill-Graph")
+st.markdown("""
+Extracts skills from resumes using **Azure OpenAI** and maps them into a **Neo4j Knowledge Graph**.
+""")
+
+# --- SIDEBAR / SETTINGS ---
+with st.sidebar:
+    st.header("System Status")
+    if os.getenv("AZURE_OPENAI_API_KEY"):
+        st.success("Azure OpenAI: Connected")
+    else:
+        st.error("Azure OpenAI: Key Missing")
+        
+    if os.getenv("NEO4J_URI"):
+        st.success("Neo4j Database: Configured")
+    else:
+        st.error("Neo4j: Credentials Missing")
+
+# --- FILE UPLOAD SECTION ---
+uploaded_file = st.file_uploader("Upload Resume", type=["docx", "txt"])
 
 if uploaded_file is not None:
-    # 1. Create a secure, temporary directory for the uploaded file and crew output
-    # This ensures the container's file system is used correctly.
-    temp_dir = tempfile.mkdtemp()
+    st.info(f"Processing: {uploaded_file.name}")
     
-    # Define the path where the crew will find the data and write outputs
-    temp_csv_path = os.path.join(temp_dir, "uploaded_data.csv")
-    
-    # Write the uploaded file stream to the temporary file path
-    with open(temp_csv_path, "wb") as f:
-        f.write(uploaded_file.getbuffer())
+    try:
+        # 2. ROBUST TEXT EXTRACTION
+        if uploaded_file.name.endswith(".docx"):
+            # Use python-docx to parse binary Word files
+            doc_file = io.BytesIO(uploaded_file.getvalue())
+            doc = Document(doc_file)
+            raw_text = "\n".join([para.text for para in doc.paragraphs if para.text.strip()])
+        else:
+            # Standard UTF-8 decoding for text files
+            raw_text = uploaded_file.getvalue().decode("utf-8", errors="ignore")
 
-    st.info(f"File '{uploaded_file.name}' ready for analysis.")
-    st.write(f"Data Path for Crew: `{temp_csv_path}`")
-
-    if st.button("Run Data Analysis Crew", type="primary"):
-        with st.spinner("Agents are analyzing the data and preparing the report... this may take a few minutes."):
-            try:
-                # 2. Instantiate and Run the crew
-                crew = DataAnalysisCrew()
+        # --- EXECUTION BUTTON ---
+        if st.button("Analyze & Map to Graph"):
+            with st.spinner("🤖 Agents are collaborating on extraction and graph mapping..."):
+                # 3. KICK OFF THE LANGGRAPH ORCHESTRATOR
+                # We pass the raw text into the starting state of the graph
+                final_state = app_graph.invoke({"raw_text": raw_text})
                 
-                # Pass the path to the temporary file created from the upload
-                final_report_markdown = crew.run(csv_path=temp_csv_path)
-
-                # 3. Display the result
-                st.subheader("✅ Final Analysis Report")
-                st.markdown(final_report_markdown)
+                # --- RESULTS DISPLAY ---
+                st.divider()
+                col1, col2 = st.columns(2)
                 
-            except Exception as e:
-                st.error(f"An error occurred during agent execution: {e}")
-            finally:
-                # 4. Cleanup the temporary directory
-                st.write("Cleaning up temporary files...")
-                shutil.rmtree(temp_dir)
-                st.success("Cleanup complete. Analysis is ready.")
+                with col1:
+                    st.subheader("📝 Extracted Entities")
+                    st.json(final_state.get("extracted_data", {}))
+                
+                with col2:
+                    st.subheader("🌐 Graph Status")
+                    status = final_state.get("graph_status", "Unknown")
+                    if "Success" in status:
+                        st.success("Successfully injected into Neo4j!")
+                    else:
+                        st.warning(f"Status: {status}")
+                
+                st.subheader("📄 Extracted Text Preview")
+                st.text_area("Content", raw_text[:1000] + "...", height=200)
+
+    except Exception as e:
+        st.error(f"An error occurred during processing: {e}")
+        
+        
+
+# --- FOOTER ---
+#st.divider()
+import streamlit as st
+from graph_engine import search_graph
+
+st.divider()
+st.subheader("🔍 Query your Talent Map")
+user_input = st.text_input("Ask a question (e.g., 'Find candidates with Azure skills')")
+
+if user_input:
+    with st.spinner("Thinking..."):
+        answer = search_graph(user_input)
+        st.write(f"**Answer:** {answer}")
+st.caption("Powered by LangGraph, Neo4j, and Azure OpenAI | 2026 AI Architect Suite")

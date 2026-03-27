@@ -1,0 +1,48 @@
+import sys
+from unittest.mock import MagicMock
+
+# Force Python to think these libraries are missing so it uses 'tiktoken' fallback
+sys.modules["torch"] = MagicMock()
+sys.modules["transformers"] = MagicMock()
+
+# Now import your actual tools
+import streamlit as st
+from langchain_openai import AzureChatOpenAI
+import os
+import platform
+import ctypes
+from importlib.util import find_spec
+
+# MUST BE THE FIRST BLOCK OF CODE
+if platform.system() == "Windows":
+    try:
+        # Locate the problematic DLL inside your .venv
+        if (spec := find_spec("torch")) and spec.origin:
+            torch_lib_path = os.path.join(os.path.dirname(spec.origin), "lib", "c10.dll")
+            if os.path.exists(torch_lib_path):
+                # Force the DLL to initialize manually
+                ctypes.CDLL(os.path.normpath(torch_lib_path))
+    except Exception as e:
+        print(f"DLL Pre-load failed: {e}")
+
+# Now you can proceed with other imports
+from langchain_openai import AzureChatOpenAI
+import streamlit as st
+from graph_engine import app_graph
+
+st.title("🚀 Agentic Resume Skill-Graph")
+
+uploaded_file = st.file_uploader("Upload Resume (PDF/Text)")
+
+if uploaded_file and st.button("Analyze & Map to Graph"):
+    raw_text = uploaded_file.read().decode("utf-8")
+    
+    with st.spinner("Agents are collaborating..."):
+        # Kick off the LangGraph workflow
+        final_state = app_graph.invoke({"raw_text": raw_text})
+        
+    st.success("Candidate mapped to Knowledge Graph!")
+    st.json(final_state["extracted_data"])
+    
+    st.subheader("Graph Insights")
+    st.info("Agent Suggestion: This candidate has 80% overlap with your 'Senior AI' role.")
